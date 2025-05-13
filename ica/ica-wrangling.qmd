@@ -1,0 +1,203 @@
+---
+title: "Wrangling"
+---
+```{r}
+# Load tidyverse & data
+library(tidyverse)
+elections <- read.csv("https://mac-stat.github.io/data/election_2020_county.csv")
+# Get a background map
+library(socviz)
+data(county_map)
+
+# Make a choropleth map
+library(RColorBrewer)  # For the color scale
+library(ggthemes) # For theme_map
+elections |> 
+  mutate(county_fips = as.character(county_fips)) |> 
+  mutate(county_fips = 
+           ifelse(nchar(county_fips) == 4, paste0("0", county_fips), county_fips)) |> 
+  ggplot(aes(map_id = county_fips, fill = cut(repub_pct_20, breaks = seq(0, 100, by = 10)))) +
+    geom_map(map = county_map) +
+    scale_fill_manual(values = rev(brewer.pal(10, "RdBu")), name = "% Republican") +
+    expand_limits(x = county_map$long, y = county_map$lat)  + 
+    theme_map() +
+    theme(legend.position = "right") + 
+    coord_equal()
+```
+```{r}
+# Load tidyverse for data wrangling and plotting
+library(tidyverse)
+
+# Exercise 1: select Practice
+# Create elections_small with only the specified columns
+elections_small <- elections %>%
+  select(state_name, county_name, total_votes_20, repub_pct_20, dem_pct_20,
+         total_votes_16, dem_pct_16)
+head(elections_small)  # confirm it worked
+
+# Exercise 2: filter Demo
+# Keep only counties in Hawaii
+elections_small %>% 
+  filter(state_name == "Hawaii")
+
+# Keep only counties in Hawaii or Delaware
+elections_small %>% 
+  filter(state_name %in% c("Hawaii", "Delaware"))
+
+# Counties where GOP got > 93.97% in 2020
+elections_small %>% 
+  filter(repub_pct_20 > 93.97)
+
+# Counties where GOP got ≥ 93.97% in 2020 (one more than above)
+elections_small %>% 
+  filter(repub_pct_20 >= 93.97)
+
+# Texas counties where Dems > 65% in 2020, Method 1 (two filters)
+elections_small %>% 
+  filter(state_name == "Texas") %>% 
+  filter(dem_pct_20 > 65)
+
+# Texas counties where Dems > 65% in 2020, Method 2 (one filter)
+elections_small %>% 
+  filter(state_name == "Texas", dem_pct_20 > 65)
+
+# Exercise 3: arrange Demo
+# Counties sorted lowest to highest GOP % in 2020
+elections_small %>% 
+  arrange(repub_pct_20) %>% 
+  head()
+
+# Counties sorted highest to lowest GOP % in 2020
+elections_small %>% 
+  arrange(desc(repub_pct_20)) %>% 
+  head()
+
+# Exercise 4: mutate Demo
+# a) Create diff_20 = repub_pct_20 − dem_pct_20
+elections_small %>% 
+  mutate(diff_20 = repub_pct_20 - dem_pct_20) %>% 
+  head()
+
+# b) Compute repub_votes_20 via rounding
+elections_small %>% 
+  mutate(repub_votes_20 = round(total_votes_20 * repub_pct_20 / 100)) %>% 
+  head()
+
+# c) Logical column: did GOP win in 2020?
+elections_small %>% 
+  mutate(repub_win_20 = repub_pct_20 > dem_pct_20) %>% 
+  head()
+
+# Part b: Define Dem change and indicator
+# Change in Dem support 2020 vs 2016
+elections_small %>% 
+  mutate(dem_change = dem_pct_20 - dem_pct_16) %>% 
+  head()
+
+# Was Dem support higher in 2020 than 2016?
+elections_small %>% 
+  mutate(dem_higher_20 = dem_pct_20 > dem_pct_16) %>% 
+  head()
+
+# Exercise 5: Pipe Series
+# a) Wisconsin counties where GOP lost in 2020, sorted by turnout
+elections_small %>% 
+  filter(state_name == "Wisconsin", repub_pct_20 < dem_pct_20) %>% 
+  arrange(desc(total_votes_20)) %>% 
+  head()
+
+# b) Swapping filter & arrange still yields same rows; filtering first reduces data before sorting.
+# c) Advantage: filtering early limits data volume for subsequent steps.
+# d) Delaware counties with GOP win indicator
+elections_small %>% 
+  filter(state_name == "Delaware") %>% 
+  mutate(repub_win_20 = repub_pct_20 > dem_pct_20) %>% 
+  select(county_name, repub_pct_20, dem_pct_20, repub_win_20)
+
+# e) If we select before mutate, repub_win_20 doesn't yet exist → error. Order matters when selecting new vars.
+
+# Exercise 6: DIY Pipe Series
+# a) MN counties and their 2020 Dem % from highest to lowest
+elections_small %>% 
+  filter(state_name == "Minnesota") %>% 
+  select(county_name, dem_pct_20) %>% 
+  arrange(desc(dem_pct_20))
+
+# b) mn_wi: change in Dem % for MN & WI, sorted by change ascending
+mn_wi <- elections_small %>% 
+  filter(state_name %in% c("Minnesota", "Wisconsin")) %>% 
+  mutate(dem_change = dem_pct_20 - dem_pct_16) %>% 
+  select(state_name, county_name, dem_pct_20, dem_pct_16, dem_change) %>% 
+  arrange(dem_change)
+head(mn_wi)
+
+# c) Plot change in Dem % by county, colored by state
+ggplot(mn_wi, aes(x = dem_change, y = county_name, color = state_name)) +
+  geom_point() +
+  labs(x = "Change in Dem % (2020 vs 2016)", y = "County", color = "State")
+
+# Exercise 7: summarize Demo
+# Median GOP % in 2020
+elections_small %>% summarize(median(repub_pct_20))
+# Named summary
+elections_small %>% summarize(median_repub = median(repub_pct_20))
+# Multiple summaries
+elections_small %>% summarize(median_repub = median(repub_pct_20), total_votes = sum(total_votes_20))
+
+# Exercise 8: group_by + summarize
+# Summary by state
+elections_small %>% 
+  group_by(state_name) %>% 
+  summarize(median_repub = median(repub_pct_20), total_votes = sum(total_votes_20))
+
+# Exercise 9: DIY Summaries
+# Total votes by state, sorted
+elections_small %>% 
+  group_by(state_name) %>% 
+  summarize(total_votes_state = sum(total_votes_20)) %>% 
+  arrange(desc(total_votes_state))
+
+# Total Dem & GOP votes by state
+elections_small %>% 
+  mutate(dem_votes = round(total_votes_20 * dem_pct_20 / 100),
+         rep_votes = round(total_votes_20 * repub_pct_20 / 100)) %>% 
+  group_by(state_name) %>% 
+  summarize(dem_votes = sum(dem_votes), rep_votes = sum(rep_votes))
+
+# States the Democrats won in 2020
+elections_small %>% 
+  mutate(dem_votes = round(total_votes_20 * dem_pct_20 / 100),
+         rep_votes = round(total_votes_20 * repub_pct_20 / 100)) %>% 
+  group_by(state_name) %>% 
+  summarize(dem_votes = sum(dem_votes), rep_votes = sum(rep_votes)) %>% 
+  filter(dem_votes > rep_votes)
+
+# Exercise 10: Practice on World Cup data
+world_cup <- read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-11-29/worldcups.csv")
+
+# Years Brazil won
+world_cup %>% filter(winner == "Brazil") %>% pull(year)
+
+# Top 6 World Cups by attendance
+world_cup %>% arrange(desc(attendance)) %>% head(6)
+
+# Univariate plot of goals_scored
+ggplot(world_cup, aes(x = goals_scored)) +
+  geom_histogram(binwidth = 10) +
+  labs(x = "Goals Scored", y = "Count of World Cups")
+
+# Summary stats: min, median, max goals_scored
+world_cup %>% summarize(
+  min_goals = min(goals_scored),
+  median_goals = median(goals_scored),
+  max_goals = max(goals_scored)
+)
+
+# Bivariate: goals_scored over the years
+ggplot(world_cup, aes(x = year, y = goals_scored)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Year", y = "Goals Scored")
+
+```
+
