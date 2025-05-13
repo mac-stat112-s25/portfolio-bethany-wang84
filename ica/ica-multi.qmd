@@ -1,5 +1,91 @@
 ---
 title: "Mulivariate Viz"
 ---
+```{r}
+# Import and check out data
+education <- read.csv("https://mac-stat.github.io/data/sat.csv")
+head(education)
+```
+```{r}
+library(tidyverse)
+
+# Exercise 1a: Plot average SAT scores by state
+ggplot(education, aes(x = reorder(State, sat), y = sat)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(x = "State", y = "Average SAT")
+# • Range: ~900 to ~1100
+# • Typical: most states around ~1000
+# • Shape: a few high‐scoring outliers, slight skew
+# • Non‐normal: extreme values (e.g. small states or selective testers)
+
+# Exercise 2a: SAT vs per‐pupil spending
+ggplot(education, aes(x = expend, y = sat)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Expenditure per Pupil (thousands $)", y = "Average SAT")
+# Trend: slight negative slope—higher spending ↔ lower SAT overall
+
+# Exercise 2a: SAT vs teacher salary
+ggplot(education, aes(x = salary, y = sat)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Average Teacher Salary (thousands $)", y = "Average SAT")
+# Trend: flat-to-slight negative—no clear positive link between salary and SAT
+
+# Exercise 3: Trivariate viz (sat ~ expend colored by salary)
+ggplot(education, aes(x = expend, y = sat, color = salary)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(color = "Salary (k$)", x = "Spending (k$)", y = "Average SAT")
+# • Color gradient shows salary levels
+# • Both higher spending and higher salary states tend to cluster differently,
+#   but overall relationships remain weak/negative
+
+# Exercise 4: Discretize spending into 2 groups
+ggplot(education, aes(x = salary, y = sat, color = cut(expend, 2))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(color = "Spending Group", x = "Salary (k$)", y = "Average SAT")
+# • cut(...,2) splits into low/high spending
+# • If cut(...,3), you get low/medium/high—more nuance
+# • Within each spending group, SAT and salary trend positive or flat
+
+# Exercise 5a: Univariate viz of fracCat
+ggplot(education, aes(x = fracCat)) +
+  geom_bar(fill = "lightgreen") +
+  labs(x = "SAT Participation Category", y = "Number of States")
+# • Shows counts: most states medium (15–45%), fewer low (<15%) or high (>45%)
+
+# Exercise 5b: SAT vs fracCat (boxplot & violin)
+ggplot(education, aes(x = fracCat, y = sat)) +
+  geom_boxplot(fill = "orange") +
+  labs(x = "Participation Category", y = "Average SAT")
+# • Low participation → highest median SAT
+# • High participation → lowest median SAT
+
+ggplot(education, aes(x = fracCat, y = sat)) +
+  geom_violin(trim = FALSE, fill = "purple", alpha = 0.6) +
+  labs(x = "Participation Category", y = "Average SAT")
+# • Violin confirms boxplot pattern and shows full distribution shape
+
+# Exercise 5c: Trivariate viz (sat ~ expend colored by fracCat)
+ggplot(education, aes(x = expend, y = sat, color = fracCat)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(color = "Participation", x = "Spending (k$)", y = "Average SAT")
+# • Within each fracCat group, spending and SAT correlate positively
+# • Overall negative trend is due to mixing groups with different fracCat
+
+# Exercise 5d: Simpson’s Paradox explanation
+# • Low‐participation states (small test‐taker fraction) have high SAT but low spending.
+# • High‐participation states have lower SAT but higher spending.
+# • Aggregating creates a misleading negative overall correlation,
+#   whereas controlling for fracCat reveals the true within‐group positive relationships.
+
+```
+
+
+
 
 Use this file for practice with the **mulivariate viz** in-class activity.  Refer to the class website for details.
