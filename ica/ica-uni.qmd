@@ -2,4 +2,82 @@
 title: "Univariate Viz"
 ---
 
+```{r}
+# Import data
+hikes <- read.csv("https://mac-stat.github.io/data/high_peaks.csv")
+```
+
+```{r}
+# Exercise 1:
+# Categorical (rating): observed categories, counts/proportions, relative prevalence,
+#                       logical order, clear axis labels.
+# Quantitative (elevation): range, center (mean/median), shape (skewness), spread, outliers.
+
+# Exercise 2: load ggplot tools
+library(tidyverse)  # loads ggplot2 for visualization
+
+# Exercise 3–5: Bar chart of difficulty ratings
+ggplot(hikes, aes(x = rating)) +
+  geom_bar(color = "orange", fill = "blue") +
+  labs(x = "Rating", y = "Number of hikes") +
+  theme_minimal()
+# • Shows the three observed difficulty levels
+# • Counts per level reveal that “moderate” is most common
+
+# Exercise 6: Bar chart of elevation (ineffective for continuous data)
+ggplot(hikes, aes(x = elevation)) +
+  geom_bar() +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • A bar for each unique elevation leads to clutter
+# • Fails to reveal overall distribution shape
+
+# Exercise 8–10: Histograms of elevation
+
+# Default bins
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram() +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Rough view of distribution; bin boundaries may be arbitrary
+
+# White borders for clarity
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram(color = "white") +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Separates bins visually, improving readability
+
+# Blue fill
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram(color = "white", fill = "blue") +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Combines border and fill for better aesthetics
+
+# Oversmoothed (binwidth = 1000)
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram(color = "white", binwidth = 1000) +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Very wide bins hide detail; distribution too coarse
+
+# Noisy (binwidth = 5)
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram(color = "white", binwidth = 5) +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Very narrow bins create noisy, spiky plot
+
+# Balanced (binwidth = 200)
+ggplot(hikes, aes(x = elevation)) +
+  geom_histogram(color = "white", fill = "blue", binwidth = 200) +
+  labs(x = "Elevation (feet)", y = "Number of hikes")
+# • Binwidth reveals center, spread, skew, and outliers effectively
+
+# Exercise 11: Density plot of elevation
+ggplot(hikes, aes(x = elevation)) +
+  geom_density(color = "blue", fill = "orange", alpha = 0.5) +
+  labs(x = "Elevation (feet)", y = "Density")
+# • Smooth distribution (area = 1), shows typical elevation, variability, skewness
+
+```
+
+
+
+
 Use this file for practice with the **univariate viz** in-class activity.  Refer to the class website for details.

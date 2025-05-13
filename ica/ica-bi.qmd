@@ -1,5 +1,131 @@
 ---
 title: "Bivariate Viz"
 ---
+```{r}
+# Load data
+elections <- read.csv("https://mac-stat.github.io/data/election_2020_county.csv")
+
+# Check it out
+head(elections)
+```
+
+```{r}
+library(tidyverse)
+# Exercise 0a: Percent of counties won by Republicans in 2020
+prop_repub_2020 <- mean(elections$winner_20 == "repub")
+prop_repub_2020  # ~ proportion of counties won by the GOP
+
+# Plot the 2020 winner distribution
+ggplot(elections, aes(x = winner_20)) +
+  geom_bar(fill = c("red", "blue")) +
+  labs(x = "2020 Winner", y = "Number of Counties")
+# • Shows counts of counties won by each party
+# • Follow-up: which regions drove this split?
+
+# Exercise 0b: Distribution of Republican vote share in 2020
+ggplot(elections, aes(x = repub_pct_20)) +
+  geom_histogram(color = "white", bins = 30) +
+  labs(x = "Republican Vote % (2020)", y = "County Count")
+# • Slight left skew: more counties with >50% Republican support
+# • Follow-up: which demographics correlate with high GOP support?
+
+# Exercise 1: Scatter of repub_pct_20 vs repub_pct_16
+ggplot(elections, aes(x = repub_pct_16, y = repub_pct_20)) +
+  geom_point() +
+  labs(x = "GOP % in 2016", y = "GOP % in 2020")
+# • Data frame + mapping; geom_point draws the dots
+
+# Exercise 2: Customize scatter glyphs and labels
+ggplot(elections, aes(x = repub_pct_16, y = repub_pct_20)) +
+  geom_point(shape = 3, color = "orange")
+# • shape=3 changes the symbol to a plus; color sets point color
+
+ggplot(elections, aes(x = repub_pct_16, y = repub_pct_20, label = state_abbr)) +
+  geom_text(size = 2)
+# • geom_text labels each point with its state abbreviation
+
+# Exercise 3: Relationship summary
+# • Strong, positive linear trend
+# • Counties with higher 2016 GOP % tend to have higher 2020 GOP %
+# • Outliers often in swing states (e.g., some WI/MI counties deviated)
+
+# Exercise 4a: Smooth trend only
+ggplot(elections, aes(x = repub_pct_16, y = repub_pct_20)) +
+  geom_smooth()
+# • Local smoothing line without points
+
+# Exercise 4b: Linear model fit
+ggplot(elections, aes(x = repub_pct_16, y = repub_pct_20)) +
+  geom_smooth(method = "lm")
+# • Best-fit straight line (linear regression)
+
+# Exercise 5: GOP % vs median_rent and median_age
+ggplot(elections, aes(x = median_rent, y = repub_pct_20)) +
+  geom_point() + geom_smooth(method = "lm") +
+  labs(x = "Median Rent", y = "GOP % (2020)")
+# • Moderately negative slope: higher rent → slightly less GOP support
+
+ggplot(elections, aes(x = median_age, y = repub_pct_20)) +
+  geom_point() + geom_smooth(method = "lm") +
+  labs(x = "Median Age", y = "GOP % (2020)")
+# • Weak positive slope: older counties → slightly more GOP support
+# • median_age shows a clearer trend (steeper slope) than median_rent
+
+# Exercise 6: GOP % vs historical (scatter)
+ggplot(elections, aes(x = historical, y = repub_pct_20)) +
+  geom_point()
+# • Overplotting makes it hard to compare distributions by category
+
+# Exercise 7: Violin and boxplots by historical category
+ggplot(elections, aes(x = historical, y = repub_pct_20)) +
+  geom_violin() +
+  labs(x = "State Trend", y = "GOP % (2020)")
+# • Violin shows full density shape per category
+
+ggplot(elections, aes(x = historical, y = repub_pct_20)) +
+  geom_boxplot() +
+  labs(x = "State Trend", y = "GOP % (2020)")
+# • Boxplot summarizes median, IQR, range; red > purple > blue in median GOP %
+
+# Exercise 8: Faceted density plots by historical
+ggplot(elections, aes(x = repub_pct_20, fill = historical)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("red","purple","blue")) +
+  facet_wrap(~ historical) +
+  labs(x = "GOP % (2020)", y = "Density")
+# • Faceting separates categories; alpha = 0.5 adds transparency
+
+# Exercise 9: Density with manual colors and transparency
+ggplot(elections, aes(x = repub_pct_20, fill = historical)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("red","purple","blue"))
+# • scale_fill_manual assigns specific colors
+
+# Exercise 10: Reflection (no code)
+# • Favorite: boxplots for quick comparison of medians and IQRs.
+# • Pro density vs box: shows full distribution shape.
+# • Con density vs box: less precise quantile information.
+
+# Exercise 11: Categorical vs categorical (bar plots)
+ggplot(elections, aes(x = historical)) + geom_bar()
+# • Counts of counties by state trend
+
+ggplot(elections, aes(x = winner_20)) + geom_bar()
+# • Counts of GOP vs Dem county wins
+
+# Exercise 12: Four bar-plot types
+# Stacked
+ggplot(elections, aes(x = historical, fill = winner_20)) + geom_bar()
+# Faceted
+ggplot(elections, aes(x = winner_20)) + geom_bar() + facet_wrap(~ historical)
+# Side-by-side
+ggplot(elections, aes(x = historical, fill = winner_20)) + geom_bar(position = "dodge")
+# Proportional
+ggplot(elections, aes(x = historical, fill = winner_20)) + geom_bar(position = "fill")
+# • Pro of proportional: compares proportions directly.
+# • Con: loses absolute count information.
+
+```
+
 
 Use this file for practice with the **bivariate viz** in-class activity.  Refer to the class website for details.
