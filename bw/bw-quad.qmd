@@ -3,3 +3,61 @@ title: "Quadvariate Viz"
 ---
 
 Use this file to generate a professional looking **quadvariate** visualization.  The visualization will not perfect the first time but you are expected to improve on it throughout the semester especially after covering advanced topics such as effective viz.
+```{r}
+# Load required packages
+library(tidyverse)
+
+# 1. Read Palmer Penguins data from GitHub
+penguins <- read_csv(
+  "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv"
+)
+
+# 2. Filter to complete cases for our four variables:
+#    – x: bill_length_mm (numeric)
+#    – y: bill_depth_mm  (numeric)
+#    – color: species    (categorical)
+#    – size: body_mass_g (numeric)
+penguins_clean <- penguins %>%
+  drop_na(bill_length_mm, bill_depth_mm, species, body_mass_g)
+
+# 3. Quadvariate scatterplot:
+#    • x-axis:  bill_length_mm
+#    • y-axis:  bill_depth_mm
+#    • color:   species
+#    • size:    body_mass_g
+ggplot(penguins_clean,
+       aes(x = bill_length_mm,
+           y = bill_depth_mm,
+           color = species,
+           size = body_mass_g)) +
+  
+  # points with transparency
+  geom_point(alpha = 0.75) +
+  
+  # scale the size range so circles aren’t too large
+  scale_size_continuous(range = c(1, 6), name = "Body Mass (g)") +
+  
+  # colorblind-friendly palette
+  scale_color_brewer(palette = "Dark2") +
+  
+  # labels
+  labs(
+    title    = "Bill Depth vs. Bill Length with Species & Body Mass",
+    subtitle = "Quadvariate visualization from Palmer Penguins dataset",
+    x        = "Bill Length (mm)",
+    y        = "Bill Depth (mm)",
+    color    = "Species"
+  ) +
+  
+  # clean, minimal theme
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title       = element_text(face = "bold"),
+    plot.subtitle    = element_text(size = 12, margin = margin(b = 8)),
+    axis.title       = element_text(face = "bold"),
+    legend.title     = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
