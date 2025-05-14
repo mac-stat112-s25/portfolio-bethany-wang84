@@ -1,0 +1,41 @@
+---
+title: "Solo Project"
+---
+
+```{r}
+# load libraries
+library(tidyverse)
+library(sf)
+library(tigris)
+options(tigris_use_cache = TRUE)
+
+# 1. get CA counties as an sf
+ca_counties <- counties(state = "CA", year = 2021, class = "sf")
+
+# 2. compute area in km²
+ca_counties <- ca_counties %>%
+  mutate(area_km2 = as.numeric(st_area(geometry)) / 1e6)
+
+# 3. plot choropleth
+ggplot(ca_counties) +
+  geom_sf(aes(fill = area_km2),
+          color = "white", size = 0.2) +
+  scale_fill_viridis_c(
+    option = "plasma",
+    name   = expression("Area (km"^2*")"),
+    labels = scales::comma
+  ) +
+  labs(
+    title    = "County Land Area in California",
+    subtitle = "A choropleth of county size (km²)",
+    caption  = "Source: U.S. Census Bureau boundaries via tigris"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title    = element_text(face = "bold"),
+    plot.subtitle = element_text(margin = margin(b = 8)),
+    legend.position = "bottom"
+  )
+
+```
+
