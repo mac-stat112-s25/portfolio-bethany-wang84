@@ -1,0 +1,56 @@
+{
+  "index.qmd": {
+    "index.html": "8f9892e8"
+  },
+  "bw/bw-uni.qmd": {
+    "bw-uni.html": "1c8deabb"
+  },
+  "bw/bw-bi.qmd": {
+    "bw-bi.html": "8d9109f3"
+  },
+  "bw/bw-tri.qmd": {
+    "bw-tri.html": "de71844e"
+  },
+  "bw/bw-quad.qmd": {
+    "bw-quad.html": "3f8e5bcd"
+  },
+  "bw/bw-spatial.qmd": {
+    "bw-spatial.html": "c01231cc"
+  },
+  "bw/bw-choropleth.qmd": {
+    "bw-choropleth.html": "f0f3b05d"
+  },
+  "ica/ica-uni.qmd": {
+    "ica-uni.html": "59ff0363"
+  },
+  "ica/ica-bi.qmd": {
+    "ica-bi.html": "3e5d4e08"
+  },
+  "ica/ica-multi.qmd": {
+    "ica-multi.html": "c0371127"
+  },
+  "ica/ica-spatial.qmd": {
+    "ica-spatial.html": "62513bf8"
+  },
+  "ica/ica-effective.qmd": {
+    "ica-effective.html": "60b5589b"
+  },
+  "ica/ica-wrangling.qmd": {
+    "ica-wrangling.html": "2d58fd9e"
+  },
+  "ica/ica-dates.qmd": {
+    "ica-dates.html": "af90b41d"
+  },
+  "ica/ica-reshaping.qmd": {
+    "ica-reshaping.html": "6810be28"
+  },
+  "ica/ica-joining.qmd": {
+    "ica-joining.html": "4ace62c1"
+  },
+  "ica/ica-factors.qmd": {
+    "ica-factors.html": "4c3769f5"
+  },
+  "ica/ica-strings.qmd": {
+    "ica-strings.html": "d438f06d"
+  }
+}
