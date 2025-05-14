@@ -1,3 +1,150 @@
 ---
 title: "Reshaping"
 ---
+```{r}
+library(tidyverse)
+library(tidyr)
+library(fivethirtyeight)
+install.packages('fivethirtyeightdata', repos =
+'https://fivethirtyeightdata.github.io/drat/', type = 'source')
+```
+
+```{r}
+# Exercise 1: Sleep study reshaping & plotting
+sleep_wide <- read.csv("https://mac-stat.github.io/data/sleep_wide.csv")
+
+# Part a: units are subject × day observations once in long format
+# Part b/c: pivot to long, fix types
+sleep_long <- sleep_wide %>%
+  pivot_longer(
+    cols = starts_with("day_"),
+    names_to = "day",
+    names_prefix = "day_",
+    values_to = "reaction_time"
+  ) %>%
+  mutate(
+    Subject = as.factor(Subject),
+    day     = as.numeric(day)
+  )
+
+head(sleep_long, 3)  # check first 3 rows
+
+# Plot all subjects on one panel
+ggplot(sleep_long, aes(x = day, y = reaction_time, group = Subject, color = Subject)) +
+  geom_line() +
+  labs(
+    x     = "Days of Sleep Restriction",
+    y     = "Reaction Time (ms)",
+    title = "Reaction Time by Day for Each Subject"
+  )
+
+# Facet by subject for separate panels
+ggplot(sleep_long, aes(x = day, y = reaction_time)) +
+  geom_line() +
+  facet_wrap(~ Subject) +
+  labs(
+    x     = "Days",
+    y     = "Reaction Time (ms)",
+    title = "Individual Subject Trajectories"
+  )
+
+# Part 4: pivot back to wide
+sleep_wide2 <- sleep_long %>%
+  pivot_wider(
+    names_from   = day,
+    names_prefix = "day_",
+    values_from  = reaction_time
+  )
+head(sleep_wide2)
+
+# Exercise 5: Billboard charts
+data("billboard")
+
+# Part a: wk2 vs wk1 scatter with 45° reference
+ggplot(billboard, aes(x = wk1, y = wk2)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(
+    x     = "Week 1 Rank",
+    y     = "Week 2 Rank",
+    title = "Billboard: Week 2 vs Week 1 Rankings"
+  )
+
+# Part b: songs that improved (rank↓)
+improved <- billboard %>% filter(wk2 < wk1)
+improved
+
+# Part c: entries on 1999-11-06, drop track & date.entered
+nov_1999 <- billboard %>%
+  filter(date.entered == as.Date("1999-11-06")) %>%
+  select(-track, -date.entered)
+dim(nov_1999)  # should be 2 × 77
+
+# Part d: ranking over time for those two songs
+nov_long <- nov_1999 %>%
+  pivot_longer(
+    cols        = starts_with("wk"),
+    names_to    = "week",
+    names_prefix= "wk",
+    values_to   = "rank"
+  ) %>%
+  mutate(week = as.integer(week))
+
+ggplot(nov_long, aes(x = week, y = rank, color = artist)) +
+  geom_line() +
+  labs(
+    x     = "Week on Chart",
+    y     = "Rank",
+    title = "Chart Trajectories for Nov 6, 1999 Entrants"
+  )
+
+# Exercise 6: The Daily Show guests
+data("daily_show_guests")
+daily <- daily_show_guests
+
+# a) Top 15 guests by total appearances
+top_guests <- daily %>%
+  count(raw_guest_list, sort = TRUE) %>% 
+  head(15)
+top_guests
+
+# b) Appearances per year for those top 15
+guest_yearly <- daily %>%
+  count(raw_guest_list, year) %>%                  # count per guest × year
+  filter(raw_guest_list %in% top_guests$raw_guest_list) %>% 
+  pivot_wider(
+    names_from   = year,                       # one column per year
+    values_from  = n,                          # counts go here
+    values_fill  = 0                           # fill missing with 0
+  ) %>%
+  mutate(total = rowSums(across(`1999`:`2015`))) %>%  # total appearances
+  arrange(desc(total))
+guest_yearly
+
+# c) Guest group trends over time
+plot_data <- daily %>%
+  mutate(
+    broad_group = case_when(
+      group %in% c("Acting","Athletics","Comedy","Musician") ~ "Acting, Comedy & Music",
+      group %in% c("Media","media","Science","Academic","Consultant","Clergy") ~ "Media",
+      group %in% c("Politician","Political Aide","Government","Military","Business","Advocacy") ~ "Government & Politics",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(broad_group))                # drop uncategorized
+
+fraction_data <- plot_data %>%
+  count(year, broad_group) %>%               # count per year × broad_group
+  group_by(year) %>%
+  mutate(fraction = n / sum(n))              # fraction within each year
+
+ggplot(fraction_data, aes(x = year, y = fraction, color = broad_group)) +
+  geom_line() +
+  labs(
+    x     = "Year",
+    y     = "Fraction of Guests",
+    color = "Guest Category",
+    title = "Yearly Composition of The Daily Show Guests"
+  )
+```
+

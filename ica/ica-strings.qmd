@@ -1,0 +1,107 @@
+---
+title: "Strings"
+---
+```{r}
+# Load required packages
+library(tidyverse)  
+library(mosaic)    
+library(rnaturalearth) 
+library(sf)          
+library(maps)    
+library(RColorBrewer) 
+library(leaflet)    
+library(fivethirtyeight)  
+courses <- read.csv("https://mac-stat.github.io/data/registrar.csv")
+# Check it out
+head(courses)
+```
+
+
+```{r}
+# Exercise 1: Time slots
+# Count how many classes meet in each days × time slot, then show the top 6
+courses %>%
+  count(days, time, sort = TRUE) %>%
+  head(6)
+# • ‘count(days, time)’ tallies each unique combination of meeting days and time
+# • ‘sort = TRUE’ orders by descending frequency
+
+# Exercise 2: Prep the data
+courses_clean <- courses %>%
+  # split "avail_max" into two numeric columns
+  separate(avail_max, into = c("avail", "max"), sep = " / ") %>%
+  mutate(across(c(avail, max), as.numeric),
+         enroll = max - avail) %>%        # compute actual enrollment
+  # split "number" like "AMST 112-01" into dept, course number, section
+  separate(number,
+           into = c("dept", "number", "section"),
+           sep = "[- ]",
+           extra = "merge") %>%
+  relocate(dept, number, section, .before = name)
+head(courses_clean)
+# • courses_clean now has: dept, number, section, name, days, time, room, instructor, avail, max, enroll
+
+# Exercise 3: Courses by department
+# a) 6 depts offering the most sections
+courses_clean %>%
+  count(dept, sort = TRUE) %>%
+  head(6)
+# b) 6 depts with longest average course titles
+courses_clean %>%
+  mutate(title_length = nchar(name)) %>%
+  group_by(dept) %>%
+  summarize(avg_title_length = mean(title_length), .groups = "drop") %>%
+  arrange(desc(avg_title_length)) %>%
+  head(6)
+
+# Exercise 4: STAT courses
+# a) Courses taught by Alicia Johnson
+courses_clean %>%
+  filter(instructor == "Alicia Johnson")
+
+# b) STAT sections: clean up names, extract start time
+stat <- courses_clean %>%
+  filter(dept == "STAT") %>%
+  mutate(
+    name      = str_remove(name, "^Introduction to "),
+    name      = str_replace(name, "Statistical", "Stat"),
+    start_time = str_trim(str_extract(time, "^[^\\-]+"))
+  ) %>%
+  select(number, name, start_time, enroll)
+nrow(stat)  # should be 19
+head(stat)
+
+# Exercise 5: More cleaning for enrollments
+enrollments <- courses_clean %>%
+  filter(!dept %in% c("PE", "INTD")) %>%                             # drop PE and INTD
+  filter(!(dept == "MUSI" & as.numeric(number) < 100),
+         !(dept == "THDA" & as.numeric(number) < 100)) %>%           # drop ensembles/practicums
+  filter(!str_detect(name, "\\bLab\\b"))                             # drop true lab sections
+head(enrollments)
+
+# Exercise 6: Enrollment & departments
+# Example explorations:
+
+# Numerical summary: median and count of enrollments by department
+enrollments %>%
+  group_by(dept) %>%
+  summarize(
+    median_enroll = median(enroll),
+    section_count = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(section_count))
+
+# Visualization: distribution of section sizes by department
+ggplot(enrollments, aes(x = enroll)) +
+  geom_histogram(binwidth = 5) +
+  facet_wrap(~ dept, scales = "free_y") +
+  labs(
+    x = "Enrollment per Section",
+    y = "Number of Sections",
+    title = "Section Size Distributions by Department"
+  )
+
+```
+
+

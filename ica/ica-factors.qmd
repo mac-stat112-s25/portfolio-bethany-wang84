@@ -1,0 +1,89 @@
+---
+title: "Factors"
+---
+```{r}
+# Load tidyverse for dplyr, ggplot2, and forcats
+library(tidyverse)
+
+# Reload and dedupe the grades data
+grades <- read.csv("https://mac-stat.github.io/data/grades.csv") %>%
+  distinct(sid, sessionID, .keep_all = TRUE)
+
+# Compute how many times each grade was assigned
+grade_distribution <- grades %>% count(grade)
+```
+
+
+```{r}
+# Exercise 1: Changing Order
+
+# a) Manually specify grade levels from highest to lowest, with 'S' and 'AU' last
+grade_distribution %>%
+  mutate(
+    grade = factor(
+      grade,
+      levels = c("A","A-","B+","B","B-","C+","C","C-","D+","D","D-","NC","S","AU")
+    )
+  ) %>%
+  ggplot(aes(x = grade, y = n)) +
+    geom_col() +
+    labs(
+      title = "Grade Distribution (Manual Order)",
+      x = "Grade",
+      y = "Count"
+    )
+# • factor(..., levels=...) sets the exact ordering of grade categories.
+
+# b) Reorder grades by ascending frequency
+grade_distribution %>%
+  mutate(grade = fct_reorder(grade, n)) %>%
+  ggplot(aes(x = grade, y = n)) +
+    geom_col() +
+    labs(
+      title = "Grade Distribution (Ascending Frequency)",
+      x = "Grade (Least to Most Frequent)",
+      y = "Count"
+    )
+# • fct_reorder(grade, n) reorders factor levels by the numeric 'n' in ascending order.
+
+# c) Reorder grades by descending frequency
+grade_distribution %>%
+  mutate(grade = fct_reorder(grade, n, .desc = TRUE)) %>%
+  ggplot(aes(x = grade, y = n)) +
+    geom_col() +
+    labs(
+      title = "Grade Distribution (Descending Frequency)",
+      x = "Grade (Most to Least Frequent)",
+      y = "Count"
+    )
+# • fct_reorder(..., .desc=TRUE) flips the order to descending.
+
+# Exercise 2: Changing Factor Level Labels
+
+grade_distribution %>%
+  # First ensure the manual order
+  mutate(
+    grade = factor(
+      grade,
+      levels = c("A","A-","B+","B","B-","C+","C","C-","D+","D","D-","NC","S","AU")
+    )
+  ) %>%
+  # Then recode two levels for clarity
+  mutate(
+    grade = fct_recode(
+      grade,
+      Audit        = "AU",
+      Satisfactory = "S"
+    )
+  ) %>%
+  ggplot(aes(x = grade, y = n)) +
+    geom_col() +
+    labs(
+      title = "Grade Distribution with Clear Labels",
+      x = "Grade",
+      y = "Count"
+    )
+# • fct_recode(...) renames selected factor levels, leaving others unchanged.
+
+```
+

@@ -1,0 +1,153 @@
+---
+title: "Joining"
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+# Exercise 1: Where are my keys?
+
+# Part a: mismatched key names
+students_2 <- data.frame(
+  student = c("D", "E", "F"),
+  class   = c("COMP 101", "BIOL 101", "POLI 101")
+)
+enrollments_2 <- data.frame(
+  course     = c("ART 101", "BIOL 101", "COMP 101"),
+  enrollment = c(18, 20, 19)
+)
+
+# correct left join by specifying key columns
+students_2 %>%
+  left_join(enrollments_2, join_by(class == course))
+# result: D→19, E→20, F→NA
+
+# Part c/d: joining on duplicate-named columns class & grade
+students_3 <- data.frame(
+  student = c("Y","Y","Z","Z"),
+  class   = c("COMP 101","BIOL 101","POLI 101","COMP 101"),
+  grade   = c("B","S","C","A")
+)
+enrollments_3 <- data.frame(
+  class      = c("ART 101","BIOL 101","COMP 101"),
+  grade      = c("B","A","A-"),
+  enrollment = c(20,18,19)
+)
+
+# only join on class, not grade
+students_3 %>%
+  left_join(enrollments_3, join_by(class == class))
+# grade.x = student grade; grade.y = average course grade
+
+# Exercise 2: More small practice
+
+voters <- data.frame(
+  id          = c("A","D","E","F","G"),
+  times_voted = c(2,4,17,6,20)
+)
+contact <- data.frame(
+  name    = c("A","B","C","D"),
+  address = c("summit","grand","snelling","fairview"),
+  age     = c(24,89,43,38)
+)
+
+# 1. contact info for people who HAVEN'T voted
+anti_join(contact, voters, by = c("name" = "id"))
+
+# 2. contact info for people who HAVE voted
+semi_join(contact, voters, by = c("name" = "id"))
+
+# 3. any data available on each person
+full_join(voters, contact, by = c("id" = "name"))
+
+# 4. add contact info to the voting roster where possible
+left_join(voters, contact, by = c("id" = "name"))
+
+# Exercise 3: Bigger datasets
+
+grades <- read.csv("https://mac-stat.github.io/data/grades.csv") %>%
+  distinct(sid, sessionID, .keep_all = TRUE)
+courses <- read.csv("https://mac-stat.github.io/data/courses.csv")
+
+# how many rows and columns?
+dim(grades)   # grades: rows × cols
+dim(courses)  # courses: rows × cols
+
+# Exercise 4: Class size
+
+# Part a: combine cross-listed sessions by summing enrollments
+courses_combined <- courses %>%
+  group_by(sessionID) %>%
+  summarize(enroll = sum(enroll), .groups = "drop")
+dim(courses_combined)  # should be 1695 × 2
+
+# Part b: median class size overall
+courses_combined %>%
+  summarize(median_class_size = median(enroll))
+
+# Part c: median class size experienced by each student
+student_class_size <- grades %>%
+  left_join(courses_combined, by = "sessionID") %>%
+  group_by(sid) %>%
+  summarize(median_size = median(enroll), .groups = "drop")
+head(student_class_size)
+
+# Part d: histogram of median class sizes per student
+ggplot(student_class_size, aes(x = median_size)) +
+  geom_histogram() +
+  labs(x = "Median Class Size", y = "Number of Students")
+
+# Exercise 5: Narrowing in on classes
+
+# Part a: students in session1986
+grades %>%
+  filter(sessionID == "session1986")
+
+# Part b: students in department E courses
+dept_E <- courses %>% filter(dept == "E")
+grades %>%
+  semi_join(dept_E, by = "sessionID") %>%
+  distinct(sid)
+
+# Exercise 6: All the wrangling
+
+# GPA conversion table
+gpa_conversion <- tibble(
+  grade = c("A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","NC","AU","S"),
+  gp    = c(4.3,4.0,3.7,3.3,3.0,2.7,2.3,2.0,1.7,1.3,1.0,0.7,0.0,NA,NA)
+)
+
+# Part a: total student enrollments by department
+grades %>%
+  left_join(courses_combined, by = "sessionID") %>%
+  left_join(courses %>% select(sessionID, dept), by = "sessionID") %>%
+  count(dept, name = "total_enrollments") %>%
+  arrange(desc(total_enrollments))
+
+# Part b: GPA for each student
+student_gpa <- grades %>%
+  left_join(gpa_conversion, by = "grade") %>%
+  group_by(sid) %>%
+  summarize(gpa = mean(gp, na.rm = TRUE), .groups = "drop")
+head(student_gpa)
+
+# Part c: median GPA across all students
+student_gpa %>%
+  summarize(median_gpa = median(gpa, na.rm = TRUE))
+
+# Part d: fraction of grades below B+ (gp < 3.3)
+grades %>%
+  left_join(gpa_conversion, by = "grade") %>%
+  summarize(fraction_below_Bplus = mean(gp < 3.3, na.rm = TRUE))
+
+# Part e: GPA for each instructor
+grades %>%
+  left_join(courses, by = "sessionID") %>%
+  left_join(gpa_conversion, by = "grade") %>%
+  group_by(iid) %>%
+  summarize(instructor_gpa = mean(gp, na.rm = TRUE), .groups = "drop") %>%
+  arrange(instructor_gpa)
+
+```
+

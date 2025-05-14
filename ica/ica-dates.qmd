@@ -1,3 +1,143 @@
 ---
 title: "Dates"
 ---
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(lubridate)
+library(mosaic)
+```
+
+```{r}
+# Exercise 1a: More Filtering
+# Keep only Adelie and Chinstrap using %in%
+penguins %>% 
+  filter(species %in% c("Adelie", "Chinstrap")) %>% 
+  count(species)
+# %in% keeps rows where species is one of the two
+
+# Keep only Adelie and Chinstrap using !=
+penguins %>% 
+  filter(species != "Gentoo") %>% 
+  count(species)
+# species != "Gentoo" drops Gentoo, leaving the other two
+
+# Exercise 1b: Handling NAs
+# Count how many penguins missing body_mass_g
+penguins %>% summarize(missing = sum(is.na(body_mass_g)))
+# Remove only those missing body_mass_g
+penguins_w_body_mass <- penguins %>% filter(!is.na(body_mass_g))
+# Remove rows missing *any* variable (use sparingly!)
+penguins_complete <- penguins %>% na.omit()
+# na.omit() drops rows with ANY NA; use only when you truly need complete cases
+
+# Exercise 2: More Selecting
+# Keep everything except year and island
+penguins %>% select(-year, -island)
+
+# Keep species and all measurements in millimeters
+penguins %>% select(species, ends_with("_mm"))
+
+# Keep species and all bill-related measurements
+penguins %>% select(species, starts_with("bill"))
+
+# Keep species and all length-related measurements
+penguins %>% select(species, contains("length"))
+
+# Exercise 3: Arranging, Counting, Grouping by Multiple
+# Sort by species then island
+penguins %>% arrange(species, island)
+
+# Count male/female by species
+penguins %>% count(species, sex)
+
+# Average body mass by species and sex
+penguins %>% 
+  group_by(species, sex) %>% 
+  summarize(mean_mass = mean(body_mass_g, na.rm = TRUE))
+
+# Exercise 4: Dates with lubridate
+today <- as.Date(today())
+class(today)           # "Date"
+year(today)            # 2025
+month(today)           # 5
+month(today, label=TRUE)  # "May"
+week(today)            # 19 (ISO week)
+mday(today)            # 7 (day of month)
+yday(today)            # 127 (day of year)
+wday(today)            # 4 (1 = Sunday)
+wday(today, label=TRUE)  # "Wed"
+today >= ymd("2024-02-14")  # TRUE
+today <  ymd("2024-02-14")  # FALSE
+
+# Exercise 5: Birthdays dataset
+data("Birthdays")
+# How many days of data per state?
+Birthdays %>% count(state)
+
+# Total births overall
+Birthdays %>% summarize(total_births = sum(births))
+
+# Total births per state, sorted low→high
+Birthdays %>% 
+  group_by(state) %>% 
+  summarize(total = sum(births)) %>% 
+  arrange(total)
+
+# Exercise 6: daily_births and plot
+daily_births <- Birthdays %>% 
+  group_by(date, wday) %>% 
+  summarize(total_births = sum(births), .groups = "drop")
+
+ggplot(daily_births, aes(x = date, y = total_births, color = wday)) +
+  geom_line() +
+  labs(x = "Date", y = "Total Births", color = "Weekday")
+
+# Exercise 7a: Monthly births over time
+monthly_births <- Birthdays %>% 
+  mutate(month = month(date, label = TRUE)) %>% 
+  group_by(year, month) %>% 
+  summarize(births = sum(births), .groups = "drop")
+
+ggplot(monthly_births, aes(x = month, y = births, group = year, color = factor(year))) +
+  geom_line() +
+  labs(x = "Month", y = "Total Births", color = "Year")
+# Seasonal peaks and troughs emerge, consistent patterns year-to-year.
+
+# Exercise 7b: Weekly births in 1988 by state (drop week 53)
+weekly_1988 <- Birthdays %>% 
+  filter(year == 1988) %>% 
+  mutate(week = week(date)) %>% 
+  filter(week != 53) %>% 
+  group_by(state, week) %>% 
+  summarize(births = sum(births), .groups = "drop")
+
+ggplot(weekly_1988, aes(x = week, y = births, color = state)) +
+  geom_line() +
+  labs(x = "Week", y = "Total Births", color = "State")
+# Notice seasonal trends differ by state
+
+# Exercise 7c: Compare MN vs LA in 1988
+mn_la_1988 <- weekly_1988 %>% filter(state %in% c("MN", "LA"))
+
+ggplot(mn_la_1988, aes(x = week, y = births, color = state)) +
+  geom_line() +
+  labs(x = "Week", y = "Total Births", color = "State")
+# MN and LA show different seasonal patterns reflecting climate differences
+
+# Exercise 8: More Practice
+# a) MA in 1979, sorted by births descending
+Birthdays %>% 
+  filter(state == "MA", year == 1979) %>% 
+  arrange(desc(births))
+
+# b) Top 5 states by total births from 1979-09-09 to 1979-09-12
+Birthdays %>% 
+  filter(date >= ymd("1979-09-09"), date <= ymd("1979-09-12")) %>% 
+  group_by(state) %>% 
+  summarize(total = sum(births), .groups = "drop") %>% 
+  arrange(desc(total)) %>% 
+  head(5)
+
+```
+
