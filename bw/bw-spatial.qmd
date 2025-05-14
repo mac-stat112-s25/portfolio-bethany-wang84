@@ -1,0 +1,51 @@
+---
+title: "Spatial Viz"
+---
+
+Use this file to generate a professional looking **spatial** visualization.  The visualization will not perfect the first time but you are expected to improve on it throughout the semester especially after covering advanced topics such as effective viz.
+```{r}
+# 1. Load libraries
+library(sf)
+library(tidyverse)
+
+# 2. Read the US-states GeoJSON directly as an sf
+us_states <- read_sf(
+  "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json",
+  quiet = TRUE
+)
+
+# 3. (Optional) Reproject to an equal-area CRS for accurate area calcs
+#    EPSG:5070 is NAD83 / Conus Albers
+us_states <- st_transform(us_states, crs = 5070)
+
+# 4. Compute area in km²
+us_states <- us_states %>%
+  mutate(
+    area_km2 = as.numeric(st_area(geometry)) / 1e6
+  )
+
+# 5. Plot a clean choropleth
+ggplot(us_states) +
+  geom_sf(aes(fill = area_km2),
+          color = "white",
+          size  = 0.2) +
+  scale_fill_viridis_c(
+    option = "plasma",
+    name   = "Area (km²)"
+  ) +
+  labs(
+    title    = "Area of US States (Equal-Area Projection)",
+    subtitle = "Choropleth from PublicaMundi GeoJSON",
+    caption  = "Source: github.com/PublicaMundi/MappingAPI"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title       = element_text(face = "bold"),
+    plot.subtitle    = element_text(margin = margin(b = 8)),
+    legend.title     = element_text(face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
